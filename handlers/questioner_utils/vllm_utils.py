@@ -3,7 +3,7 @@ import base64
 from PIL import Image
 from typing import List, Tuple, Dict
 from qwen_vl_utils import process_vision_info
-from task_formatter import TaskFormatter
+from .task_formatter import TaskFormatter
 from collections import Counter
 
 task_formatter_obj = TaskFormatter()
