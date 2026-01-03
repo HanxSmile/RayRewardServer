@@ -52,7 +52,7 @@ class HandlerGroup:
                 num_gpus=gpu_per_worker,
                 num_cpus=cpu_per_worker,
                 placement_group=self.pg,
-                placement_group_bundle_idx=i,
+                placement_group_bundle_index=i,
                 name=f"{self.name}_worker_{i}",
             ).remote(
                 class_name=class_name,
