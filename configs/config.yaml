@@ -1,0 +1,24 @@
+server:
+  host: "0.0.0.0"
+  port: 8000
+
+cluster:
+  nnodes: 1
+  gpus_per_node: 4
+  cpus_per_worker: 1
+
+handlers:
+  dummy:
+    class_name: "DummyHandler"
+    num_workers: 4
+    gpu_per_worker: 0.25
+    init_kwargs:
+      scale: 2.0
+
+  vllm_chat:
+    class_name: "VLLMChatHandler"
+    num_workers: 2
+    gpu_per_worker: 1.0
+    init_kwargs:
+      model_path: "facebook/opt-125m"   # 示例，自己换
+      max_tokens: 32
