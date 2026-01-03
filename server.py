@@ -1,4 +1,5 @@
 from __future__ import annotations
+from handlers import *
 
 import argparse
 from typing import Any, Dict, List
@@ -9,7 +10,7 @@ from pydantic import BaseModel
 
 from commons.config_loader import load_service_config
 from core.scheduler import init_handler_groups
-from handlers import *
+
 
 
 class InferenceRequest(BaseModel):

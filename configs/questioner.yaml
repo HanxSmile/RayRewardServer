@@ -9,13 +9,13 @@ cluster:
 
 handlers:
   questioner:
-    class_name: "questioner"
+    class_name: "handlers.questioner:QuestionerHandler"
     num_workers: 1
     gpu_per_worker: 1.0
     placement_strategy: "PACK"   # 也可以改成 SPREAD / STRICT_PACK / STRICT_SPREAD
     init_kwargs:
       # 建议改成你机器上的本地模型路径；如果你环境能联网/有缓存，也可用 HF 名称
-      model_path: "facebook/opt-125m"
+      model_path: "/data/share/250911/models/Lingshu-7B"
       tensor_parallel_size: 1
       max_model_len: 20480
       gpu_mem_util: 0.9

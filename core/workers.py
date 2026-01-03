@@ -1,6 +1,6 @@
 # workers.py
 from __future__ import annotations
-
+import importlib
 from commons.registry import registry
 from typing import Any, Dict, List, Tuple
 
@@ -17,8 +17,11 @@ class GPUWorker:
     """
 
     def __init__(self, class_name: str, handler_init_kwargs: dict | None = None):
-        handler_cls = registry.get_handler_class(class_name)
+        # handler_cls = registry.get_handler_class(class_name)
 
+        module_path, class_name = class_name.split(":")
+        module = importlib.import_module(module_path)
+        handler_cls = getattr(module, class_name)
         self.handler = handler_cls(**(handler_init_kwargs or {}))
 
     def infer(self, items_with_idx: List[Tuple[int, Any]]) -> List[Tuple[int, Any]]:
