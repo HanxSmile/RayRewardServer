@@ -9,7 +9,7 @@ cluster:
 
 handlers:
   questioner:
-    class_name: "handlers.questioner:QuestionerHandler"
+    class_name: "./handlers/questioner.py:QuestionerHandler"
     num_workers: 1
     gpu_per_worker: 1.0
     placement_strategy: "PACK"   # 也可以改成 SPREAD / STRICT_PACK / STRICT_SPREAD
