@@ -1,5 +1,6 @@
 from __future__ import annotations
 from handlers import *
+from pathlib import Path
 
 import argparse
 from typing import Any, Dict, List
@@ -10,7 +11,6 @@ from pydantic import BaseModel
 
 from commons.config_loader import load_service_config
 from core.scheduler import init_handler_groups
-
 
 
 class InferenceRequest(BaseModel):
@@ -113,6 +113,13 @@ def main():
 
     # 初始化 Ray（address=None 表示本地启动）
     ray.init(address=cfg_obj.ray_address, ignore_reinit_error=True)
+
+    ROOT_DIR = Path(__file__).resolve().parent  # RayRewardServer 根目录
+    ray.init(
+        address=cfg_obj.ray_address,
+        runtime_env={"working_dir": str(ROOT_DIR)},
+        ignore_reinit_error=True,
+    )
 
     # 初始化各个 handler 对应的 HandlerGroup
     handler_groups = init_handler_groups(cfg)
