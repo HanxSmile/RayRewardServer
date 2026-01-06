@@ -98,19 +98,18 @@ class GPUWorker:
         ]:
             os.environ.pop(k, None)
 
-        # Force a "single-process" view for the actor.
-
-        # os.environ["RANK"] = "0"
-        # os.environ["WORLD_SIZE"] = "1"
-        # os.environ["LOCAL_RANK"] = "0"
-
+        os.environ["VLLM_USE_V1"] = "1"
         # Per-actor unique port.
         port = cls._pick_dist_port(worker_index, int(torch_dist_port_base))
+        base_vllm_port = int(os.environ.get("VLLM_PORT_BASE", 80000))
+        worker_torch_port = torch_dist_port_base + (worker_index * 10)
+        worker_vllm_port = base_vllm_port + (worker_index * 50)
+
         os.environ["MASTER_ADDR"] = "127.0.0.1"
-        os.environ["MASTER_PORT"] = str(port)
+        os.environ["MASTER_PORT"] = str(worker_torch_port)
         # vLLM 相关端口设置
         os.environ["VLLM_HOST_IP"] = "127.0.0.1"
-        os.environ["VLLM_RPC_BASE_PORT"] = str(port)
+        os.environ["VLLM_RPC_BASE_PORT"] = str(worker_vllm_port)
 
     def infer(self, items_with_idx: List[Tuple[int, Any]]) -> List[Tuple[int, Any]]:
         """对一小块 (chunk) 数据做推理。
