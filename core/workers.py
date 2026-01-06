@@ -19,11 +19,11 @@ class GPUWorker:
     """
 
     def __init__(
-        self,
-        class_name: str,
-        handler_init_kwargs: dict | None = None,
-        worker_index: int = 0,
-        torch_dist_port_base: int = 61000,
+            self,
+            class_name: str,
+            handler_init_kwargs: dict | None = None,
+            worker_index: int = 0,
+            torch_dist_port_base: int = 61000,
     ):
         # NOTE:
         # This service is often launched inside a PyTorch distributed job
@@ -93,18 +93,24 @@ class GPUWorker:
             "TORCHELASTIC_RESTART_COUNT",
             "TORCHELASTIC_MAX_RESTARTS",
             "TORCHELASTIC_ERROR_FILE",
+            "VLLM_HOST_IP",
+            "VLLM_RPC_BASE_PORT",
         ]:
             os.environ.pop(k, None)
 
         # Force a "single-process" view for the actor.
-        os.environ["MASTER_ADDR"] = "127.0.0.1"
-        os.environ["RANK"] = "0"
-        os.environ["WORLD_SIZE"] = "1"
-        os.environ["LOCAL_RANK"] = "0"
+
+        # os.environ["RANK"] = "0"
+        # os.environ["WORLD_SIZE"] = "1"
+        # os.environ["LOCAL_RANK"] = "0"
 
         # Per-actor unique port.
         port = cls._pick_dist_port(worker_index, int(torch_dist_port_base))
+        os.environ["MASTER_ADDR"] = "127.0.0.1"
         os.environ["MASTER_PORT"] = str(port)
+        # vLLM 相关端口设置
+        os.environ["VLLM_HOST_IP"] = "127.0.0.1"
+        os.environ["VLLM_RPC_BASE_PORT"] = str(port)
 
     def infer(self, items_with_idx: List[Tuple[int, Any]]) -> List[Tuple[int, Any]]:
         """对一小块 (chunk) 数据做推理。
