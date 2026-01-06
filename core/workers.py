@@ -1,5 +1,7 @@
 # workers.py
 from __future__ import annotations
+import os
+import socket
 import importlib
 from commons.registry import registry
 from typing import Any, Dict, List, Tuple
@@ -16,13 +18,93 @@ class GPUWorker:
     - health() 调用 handler.health()（如果存在）并做规范化。
     """
 
-    def __init__(self, class_name: str, handler_init_kwargs: dict | None = None):
-        # handler_cls = registry.get_handler_class(class_name)
+    def __init__(
+        self,
+        class_name: str,
+        handler_init_kwargs: dict | None = None,
+        worker_index: int = 0,
+        torch_dist_port_base: int = 61000,
+    ):
+        # NOTE:
+        # This service is often launched inside a PyTorch distributed job
+        # (torchrun / kubeflow pytorchjob). In that environment, env vars like
+        # MASTER_ADDR/MASTER_PORT/RANK/WORLD_SIZE are commonly set.
+        # vLLM internally calls torch.distributed.init_process_group() even
+        # when data_parallel_size=1, and will try to create a TCPStore server
+        # on MASTER_PORT. If multiple Ray actors inherit the same MASTER_PORT,
+        # they will fight for the same port and crash with EADDRINUSE.
+        #
+        # Fix: sanitize/override torch.distributed env vars *per actor* BEFORE
+        # importing the handler module (because handler modules import vllm at
+        # import time).
+        self._setup_local_torch_dist_env(worker_index, torch_dist_port_base)
 
         module_path, class_name = class_name.split(":")
         module = importlib.import_module(module_path)
         handler_cls = getattr(module, class_name)
         self.handler = handler_cls(**(handler_init_kwargs or {}))
+
+    @staticmethod
+    def _port_is_free(port: int, host: str = "0.0.0.0") -> bool:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind((host, port))
+            return True
+        except OSError:
+            return False
+        finally:
+            try:
+                s.close()
+            except Exception:
+                pass
+
+    @classmethod
+    def _pick_dist_port(cls, worker_index: int, base: int) -> int:
+        # Deterministic scan: base+idx, base+idx+N, ... to avoid collisions
+        # when many actors start concurrently.
+        # Keep the window reasonably small.
+        start = base + int(worker_index)
+        for k in range(0, 1000):
+            port = start + 16 * k  # stride reduces collision between adjacent idx
+            if 1024 <= port <= 65535 and cls._port_is_free(port):
+                return port
+        # Fall back: let OS choose a free port (rare path)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(("0.0.0.0", 0))
+        port = s.getsockname()[1]
+        s.close()
+        return int(port)
+
+    @classmethod
+    def _setup_local_torch_dist_env(cls, worker_index: int, torch_dist_port_base: int) -> None:
+        # Clear potentially dangerous vars from outer torchrun/elastic context.
+        # Keep this list conservative; it's fine to remove more.
+        for k in [
+            "RANK",
+            "WORLD_SIZE",
+            "LOCAL_RANK",
+            "LOCAL_WORLD_SIZE",
+            "NODE_RANK",
+            "GROUP_RANK",
+            "ROLE_RANK",
+            "ROLE_WORLD_SIZE",
+            "TORCHELASTIC_RUN_ID",
+            "TORCHELASTIC_RESTART_COUNT",
+            "TORCHELASTIC_MAX_RESTARTS",
+            "TORCHELASTIC_ERROR_FILE",
+        ]:
+            os.environ.pop(k, None)
+
+        # Force a "single-process" view for the actor.
+        os.environ["MASTER_ADDR"] = "127.0.0.1"
+        os.environ["RANK"] = "0"
+        os.environ["WORLD_SIZE"] = "1"
+        os.environ["LOCAL_RANK"] = "0"
+
+        # Per-actor unique port.
+        port = cls._pick_dist_port(worker_index, int(torch_dist_port_base))
+        os.environ["MASTER_PORT"] = str(port)
 
     def infer(self, items_with_idx: List[Tuple[int, Any]]) -> List[Tuple[int, Any]]:
         """对一小块 (chunk) 数据做推理。

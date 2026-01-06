@@ -39,6 +39,12 @@ class ClusterConfig:
     nnodes: int = 1
     gpus_per_node: float = 1.0
     cpus_per_worker: float = 1.0
+    # Base port for per-actor torch.distributed TCPStore (MASTER_PORT).
+    # When this service is launched inside a torchrun / kubeflow pytorchjob,
+    # env vars like MASTER_PORT may be inherited by all Ray actors and cause
+    # port collisions (EADDRINUSE). We therefore set a unique port per actor
+    # starting from this base.
+    torch_dist_port_base: int = 61000
 
     def post_init(self) -> None:
         self.nnodes = int(self.nnodes)
@@ -50,6 +56,12 @@ class ClusterConfig:
             raise ValueError(f"cluster.gpus_per_node must be > 0, got {self.gpus_per_node}")
         if self.cpus_per_worker <= 0:
             raise ValueError(f"cluster.cpus_per_worker must be > 0, got {self.cpus_per_worker}")
+
+        self.torch_dist_port_base = int(self.torch_dist_port_base)
+        if not (1024 <= self.torch_dist_port_base <= 65535):
+            raise ValueError(
+                f"cluster.torch_dist_port_base must be in [1024, 65535], got {self.torch_dist_port_base}"
+            )
 
 
 @dataclass

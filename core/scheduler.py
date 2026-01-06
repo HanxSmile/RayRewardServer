@@ -39,6 +39,12 @@ class HandlerGroup:
         class_name = self.handler_cfg["class_name"]
         init_kwargs = self.handler_cfg.get("init_kwargs", {})
 
+        # vLLM will initialize torch.distributed even when dp/tp=1.
+        # If this service is launched inside a torchrun environment, all Ray
+        # actors may inherit the same MASTER_PORT and crash with EADDRINUSE.
+        # We therefore assign a per-actor port starting from this base.
+        torch_dist_port_base = int(self.cluster_cfg.get("torch_dist_port_base", 61000))
+
         # 为当前 handler 创建一个 placement group，把每个 worker 放在一个 bundle 里
         bundles = [{"GPU": gpu_per_worker, "CPU": cpu_per_worker} for _ in range(num_workers)]
         strategy = str(self.handler_cfg.get("placement_strategy", "PACK")).upper()
@@ -57,6 +63,8 @@ class HandlerGroup:
             ).remote(
                 class_name=class_name,
                 handler_init_kwargs=init_kwargs,
+                worker_index=i,
+                torch_dist_port_base=torch_dist_port_base,
             )
             self.workers.append(worker)
 
