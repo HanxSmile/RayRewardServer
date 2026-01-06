@@ -101,7 +101,7 @@ class GPUWorker:
         os.environ["VLLM_USE_V1"] = "1"
         # Per-actor unique port.
         port = cls._pick_dist_port(worker_index, int(torch_dist_port_base))
-        base_vllm_port = int(os.environ.get("VLLM_PORT_BASE", 80000))
+        base_vllm_port = int(os.environ.get("VLLM_PORT_BASE", 50000))
         worker_torch_port = torch_dist_port_base + (worker_index * 10)
         worker_vllm_port = base_vllm_port + (worker_index * 50)
         os.environ["RAY_PYTORCH_MASTER_PORT"] = str(70000 + worker_index * 40)
