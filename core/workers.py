@@ -109,7 +109,8 @@ class GPUWorker:
         os.environ["MASTER_PORT"] = str(worker_torch_port)
         # vLLM 相关端口设置
         os.environ["VLLM_HOST_IP"] = "127.0.0.1"
-        os.environ["VLLM_RPC_BASE_PORT"] = str(worker_vllm_port)
+        # os.environ["VLLM_RPC_BASE_PORT"] = str(worker_vllm_port)
+        os.environ["VLLM_PORT"] = str(worker_vllm_port)
 
     def infer(self, items_with_idx: List[Tuple[int, Any]]) -> List[Tuple[int, Any]]:
         """对一小块 (chunk) 数据做推理。
