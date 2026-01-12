@@ -24,8 +24,8 @@ handlers:
       top_p: 0.95
       num_samples: 1
       # dataset information
+      sys_prompt_key: sys_prompt
       prompt_key: prompt
-      answer_key: answer
       image_key: images
       image_limits: 1
       min_pixels: 262144
