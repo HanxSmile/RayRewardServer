@@ -143,7 +143,7 @@ class GenerateQuestionsHandler(BaseHandler):
 
         results_all = []
         for i, (item, response) in enumerate(zip(batch, responses)):
-            response = response[0].text
+            response = response.outputs[0].text
             try:
                 question, choices, thinking = self.extract_question_content(response, item[self.question_type_key])
             except Exception as e:
