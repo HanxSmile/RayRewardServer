@@ -30,7 +30,7 @@ handlers:
       image_limits: 1
       min_pixels: 262144
       max_pixels: 4194304
-      question_type: single_choice
+      question_type_key: question_type
 
 
 

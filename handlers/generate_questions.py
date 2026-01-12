@@ -20,7 +20,7 @@ class GenerateQuestionsHandler(BaseHandler):
             max_tokens, temperature, top_p, num_samples,
             prompt_key, sys_prompt_key, image_key, image_limits=None,
             min_pixels: Optional[int] = None, max_pixels: Optional[int] = None,
-            question_type="single_choice"
+            question_type_key="question_type"
     ):
         self.llm = LLM(
             model=model_path,
@@ -45,7 +45,7 @@ class GenerateQuestionsHandler(BaseHandler):
         self.image_limits = image_limits
         self.min_pixels = min_pixels
         self.max_pixels = max_pixels
-        self.question_type = question_type
+        self.question_type_key = question_type_key
 
     @staticmethod
     def extract_choices(
@@ -145,8 +145,8 @@ class GenerateQuestionsHandler(BaseHandler):
         for i, (item, response) in enumerate(zip(batch, responses)):
             response = response[0].text
             try:
-                question, choices, thinking = self.extract_question_content(response, self.question_type)
-                if (not question) or (not choices):
+                question, choices, thinking = self.extract_question_content(response, item[self.question_type_key])
+                if (not question):
                     continue
                 qa = {
                     "question": question,
