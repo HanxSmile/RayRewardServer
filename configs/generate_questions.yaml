@@ -8,7 +8,7 @@ cluster:
   cpus_per_worker: 1
 
 handlers:
-  questioner:
+  generate_questions:
     class_name: "handlers.generate_questions:GenerateQuestionsHandler"
     num_workers: 16
     gpu_per_worker: 1.0
