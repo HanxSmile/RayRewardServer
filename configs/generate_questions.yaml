@@ -1,0 +1,40 @@
+server:
+  host: "0.0.0.0"
+  port: 8000
+
+cluster:
+  nnodes: 1
+  gpus_per_node: 1
+  cpus_per_worker: 1
+
+handlers:
+  questioner:
+    class_name: "handlers.generate_questions:GenerateQuestionsHandler"
+    num_workers: 16
+    gpu_per_worker: 1.0
+    placement_strategy: "PACK"   # 也可以改成 SPREAD / STRICT_PACK / STRICT_SPREAD
+    init_kwargs:
+      # 建议改成你机器上的本地模型路径；如果你环境能联网/有缓存，也可用 HF 名称
+      model_path: "/data/hanxiao36/ckpts/global_step_445/actor/huggingface"
+      tensor_parallel_size: 1
+      max_model_len: 20480
+      gpu_mem_util: 0.9
+      max_tokens: 4096
+      temperature: 0.6
+      top_p: 0.95
+      num_samples: 1
+      # dataset information
+      prompt_key: prompt
+      answer_key: answer
+      image_key: images
+      image_limits: 1
+      min_pixels: 262144
+      max_pixels: 4194304
+      question_type: single_choice
+
+
+
+
+
+
+
