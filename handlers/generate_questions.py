@@ -146,21 +146,20 @@ class GenerateQuestionsHandler(BaseHandler):
             response = response[0].text
             try:
                 question, choices, thinking = self.extract_question_content(response, item[self.question_type_key])
-                if (not question):
-                    continue
+            except Exception as e:
+                # Catch any other unexpected exceptions from within process_single.
+                print(f'[server] CRITICAL: An unhandled error occurred while processing response: {response}')
+                print(f'[server] Error details: {e}')
+                question, choices, thinking = "", None, None
+            qa = None
+            if question:
                 qa = {
                     "question": question,
                     "choices": choices,
                     "thinking": thinking,
                 }
-                item["qa"] = qa
-                results_all.append(item)
-
-            except Exception as e:
-                # Catch any other unexpected exceptions from within process_single.
-                print(f'[server] CRITICAL: An unhandled error occurred while processing response: {response}')
-                print(f'[server] Error details: {e}')
-                continue
+            item["qa"] = qa
+            results_all.append(item)
         print('[server] All results have been processed.')
         return results_all
 
