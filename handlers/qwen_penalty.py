@@ -7,7 +7,7 @@ from vllm import LLM
 @registry.register_handler("qwen_penalty")
 class QwenPenaltyHandler(BaseHandler):
     TASK_QUERY = {
-        "single_choice": "Given a multiple-choice question query, retrieve another one whose content is most similar to the query",
+        "single_choice": "Given a single-choice question query, retrieve another one whose content is most similar to the query",
         "multi_choice": "Given a multiple-choice question query, retrieve another one whose content is most similar to the query",
         "closed_ended": "Given a question as query, retrieve another one whose content is most similar to the query",
         "open_ended": "Given a question as query, retrieve another one whose content is most similar to the query"
@@ -45,7 +45,9 @@ class QwenPenaltyHandler(BaseHandler):
 
     @staticmethod
     def format_question(question, choices=None):
-        if "choice" is None:
+        if not question:  # 虽然不valid，但是还是参与计算，防止输入输出长度不一致
+            return ''
+        if choices is None:  # 没有选择题，则直接返回问题
             return question
         options = []
         for idx, option in choices.items():
