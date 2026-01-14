@@ -98,7 +98,7 @@ class GPUWorker:
         ]:
             os.environ.pop(k, None)
 
-        os.environ["VLLM_USE_V1"] = "1"
+        # os.environ["VLLM_USE_V1"] = "1"  # 使用VLLM v1
         # Per-actor unique port.
         port = cls._pick_dist_port(worker_index, int(torch_dist_port_base))
         base_vllm_port = int(os.environ.get("VLLM_PORT_BASE", 50000))
