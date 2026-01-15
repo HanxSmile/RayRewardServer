@@ -55,7 +55,6 @@ class HandlerGroup:
         ray.get(self.pg.ready())
 
         for i in range(num_workers):
-            i = i + self.worker_start_id
             worker = GPUWorker.options(
                 num_gpus=gpu_per_worker,
                 num_cpus=cpu_per_worker,
@@ -65,7 +64,7 @@ class HandlerGroup:
             ).remote(
                 class_name=class_name,
                 handler_init_kwargs=init_kwargs,
-                worker_index=i,
+                worker_index=i + self.worker_start_id,
                 torch_dist_port_base=torch_dist_port_base,
             )
             self.workers.append(worker)
