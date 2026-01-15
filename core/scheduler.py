@@ -24,11 +24,12 @@ class HandlerGroup:
     - health(): 聚合所有 worker.health()。
     """
 
-    def __init__(self, name: str, handler_cfg: Dict[str, Any], cluster_cfg: Dict[str, Any]):
+    def __init__(self, name: str, handler_cfg: Dict[str, Any], cluster_cfg: Dict[str, Any], worker_start_id: int):
         self.name = name
         self.handler_cfg = handler_cfg
         self.cluster_cfg = cluster_cfg
         self.workers: List[ray.actor.ActorHandle] = []
+        self.worker_start_id = worker_start_id
         self._init_workers()
 
     def _init_workers(self) -> None:
@@ -54,6 +55,7 @@ class HandlerGroup:
         ray.get(self.pg.ready())
 
         for i in range(num_workers):
+            i = i + self.worker_start_id
             worker = GPUWorker.options(
                 num_gpus=gpu_per_worker,
                 num_cpus=cpu_per_worker,
@@ -144,7 +146,10 @@ def init_handler_groups(config: Dict[str, Any]) -> Dict[str, HandlerGroup]:
 
     # 2) 为每个 handler 创建一个 HandlerGroup
     groups: Dict[str, HandlerGroup] = {}
+    worker_start_id = 0
     for name, hcfg in handlers_cfg.items():
-        groups[name] = HandlerGroup(name=name, handler_cfg=hcfg, cluster_cfg=cluster_cfg)
+        groups[name] = HandlerGroup(name=name, handler_cfg=hcfg, cluster_cfg=cluster_cfg,
+                                    worker_start_id=worker_start_id)
+        worker_start_id += hcfg.get("num_workers", 1)
 
     return groups
