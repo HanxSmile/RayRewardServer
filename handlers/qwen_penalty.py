@@ -10,7 +10,10 @@ class QwenPenaltyHandler(BaseHandler):
         "single_choice": "Given a single-choice question query, retrieve another one whose content is most similar to the query",
         "multi_choice": "Given a multiple-choice question query, retrieve another one whose content is most similar to the query",
         "closed_ended": "Given a question as query, retrieve another one whose content is most similar to the query",
-        "open_ended": "Given a question as query, retrieve another one whose content is most similar to the query"
+        "open_ended": "Given a question as query, retrieve another one whose content is most similar to the query",
+
+        "pure_question": "Given a question as query, retrieve another one whose content is most similar to the query",
+        "pure_choices": "Given a medical-related phrase as query, retrieve another one whose content is most similar to the query",
     }
 
     def __init__(self, model_path, batch_size=128):
