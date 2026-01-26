@@ -1,5 +1,9 @@
+import json
+
 from .base import BaseHandler
 import re
+import os
+import os.path as osp
 import xmltodict
 from commons.registry import registry
 from .prompts.qwen_juedgement_prompts import PROMPTS
@@ -13,7 +17,8 @@ class QwenJudgementHandler(BaseHandler):
             self,
             model_path, tensor_parallel_size, max_model_len, gpu_mem_util,
             max_tokens, temperature, top_p,
-            batch_size
+            batch_size,
+            bad_samples_path,
     ):
         self.llm = LLM(
             model=model_path,
@@ -30,6 +35,46 @@ class QwenJudgementHandler(BaseHandler):
             top_p=top_p,
         )
         self.batch_size = batch_size
+        self.bad_samples_path = bad_samples_path
+        self.default_bad_samples = ["该胸部X光片中，最可能的诊断是什么？"]
+
+    def get_bad_samples(self):
+        if not self.bad_samples_path:
+            return self.default_bad_samples
+        all_bad_samples = []
+        all_json_files = []
+        all_text_files = []
+
+        if osp.isfile(self.bad_samples_path):
+            if self.bad_samples_path.endswith(".json"):
+                all_json_files.append(self.bad_samples_path)
+            elif self.bad_samples_path.endswith(".txt"):
+                all_text_files.append(self.bad_samples_path)
+        elif osp.isdir(self.bad_samples_path):
+            files = [_ for _ in os.listdir(self.bad_samples_path) if _.endswith(".json") or _.endswith(".txt")]
+            for file in files:
+                if file.endswith(".json"):
+                    all_json_files.append(osp.join(self.bad_samples_path, file))
+                elif file.endswith(".txt"):
+                    all_text_files.append(osp.join(self.bad_samples_path, file))
+        for file in all_json_files:
+            with open(file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, str):
+                all_bad_samples.append(data)
+            elif isinstance(data, list):
+                all_bad_samples.extend(data)
+
+        for file in all_text_files:
+            with open(file, "r", encoding="utf-8") as f:
+                data = f.readlines()
+            data = [_.strip() for _ in data if _.strip()]
+            all_bad_samples.extend(data)
+
+        all_bad_samples = list(set(all_bad_samples))
+        if all_bad_samples:
+            return all_bad_samples
+        return self.default_bad_samples
 
     @staticmethod
     def chunk_list(lst, chunk_size):
@@ -51,8 +96,7 @@ class QwenJudgementHandler(BaseHandler):
 
         return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
-    @staticmethod
-    def format_input(question, choices, question_type):
+    def format_input(self, question, choices, question_type):
         if not question:
             text = ""
         else:
@@ -65,8 +109,10 @@ class QwenJudgementHandler(BaseHandler):
             choices = f"[{choices}]"
             text = f"题干: {question}\n选项: {choices}"
         prompt = PROMPTS[question_type]
+        bad_samples = self.get_bad_samples()
+        bad_samples = "\t" + "\n\t".join(bad_samples)
         if prompt:
-            prompt = prompt.format(content=text)
+            prompt = prompt.format(content=text, bad_samples=bad_samples)
         else:
             prompt = text
         return prompt

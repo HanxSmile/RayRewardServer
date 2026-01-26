@@ -15,7 +15,7 @@ handlers:
     placement_strategy: "PACK"   # 也可以改成 SPREAD / STRICT_PACK / STRICT_SPREAD
     init_kwargs:
       # 建议改成你机器上的本地模型路径；如果你环境能联网/有缓存，也可用 HF 名称
-      model_path: "/data/hanxiao36/models/checkpoint-2000"
+      model_path: "/data/hanxiao36/models/checkpoint-5302/"
       tensor_parallel_size: 1
       max_model_len: 20480
       gpu_mem_util: 0.9
@@ -47,6 +47,7 @@ handlers:
       temperature: 0.7
       top_p: 0.9
       batch_size: 64
+      bad_samples_path: "/data/hanxiao36/projects/EasyR1/bad_samples"
 
 
 
