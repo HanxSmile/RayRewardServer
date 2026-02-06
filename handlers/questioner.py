@@ -30,9 +30,9 @@ class QuestionerHandler(BaseHandler):
 
     def process_batch(self, batch):
         system_prompts = [item["system"] for item in batch]
-        choices = [item["choices"] for item in batch]
+        choices = [item.get("choices", None) for item in batch]
         questions = [item['question'] for item in batch]
-        types = [item['type'] for item in batch]
+        types = [item['question_type'] for item in batch]
         image_list = [item['image'] for item in batch]
 
         valid_chats = [build_prompt_and_images(imgs, sys_p, p, c, t, self.processor) for imgs, sys_p, p, c, t in

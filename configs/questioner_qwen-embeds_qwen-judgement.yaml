@@ -10,7 +10,7 @@ cluster:
 handlers:
   questioner:
     class_name: "handlers.questioner:QuestionerHandler"
-    num_workers: 5
+    num_workers: 4
     gpu_per_worker: 1.0
     placement_strategy: "PACK"   # 也可以改成 SPREAD / STRICT_PACK / STRICT_SPREAD
     init_kwargs:
@@ -24,8 +24,8 @@ handlers:
       top_p: 0.95
       num_samples: 10
 
-  qwen_penalty:
-    class_name: "handlers.qwen_penalty:QwenPenaltyHandler"
+  qwen_embedding:
+    class_name: "handlers.qwen_penalty:QwenEmbeddingHandler"
     num_workers: 1
     gpu_per_worker: 1.0
     placement_strategy: "PACK"
@@ -33,9 +33,9 @@ handlers:
       model_path: "/data/share/250911/models/Qwen3-Embedding-0.6B"
       batch_size: 128
 
-  qwen_judgement:
-    class_name: "handlers.qwen_judgement:QwenJudgementHandler"
-    num_workers: 2
+  qwen_chatbot:
+    class_name: "handlers.qwen_judgement:QwenChatbotHandler"
+    num_workers: 3
     gpu_per_worker: 1.0
     placement_strategy: "PACK"
     init_kwargs:
@@ -47,7 +47,6 @@ handlers:
       temperature: 0.7
       top_p: 0.9
       batch_size: 64
-      bad_samples_path: "/data/hanxiao36/projects/EasyR1/bad_samples"
 
 
 

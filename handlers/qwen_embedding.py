@@ -4,17 +4,8 @@ from commons.registry import registry
 from vllm import LLM
 
 
-@registry.register_handler("qwen_penalty")
-class QwenPenaltyHandler(BaseHandler):
-    TASK_QUERY = {
-        "single_choice": "Given a single-choice question query, retrieve another one whose content is most similar to the query",
-        "multi_choice": "Given a multiple-choice question query, retrieve another one whose content is most similar to the query",
-        "closed_ended": "Given a question as query, retrieve another one whose content is most similar to the query",
-        "open_ended": "Given a question as query, retrieve another one whose content is most similar to the query",
-
-        "pure_question": "Given a question as query, retrieve another one whose content is most similar to the query",
-        "pure_choices": "Given a medical-related phrase as query, retrieve another one whose content is most similar to the query",
-    }
+@registry.register_handler("qwen_embedding")
+class QwenEmbeddingHandler(BaseHandler):
 
     def __init__(self, model_path, batch_size=128):
         self.llm = LLM(
@@ -25,7 +16,10 @@ class QwenPenaltyHandler(BaseHandler):
 
     @staticmethod
     def get_detailed_instruct(task_description: str, query: str) -> str:
-        return f'Instruct: {task_description}\nQuery:{query}'
+        if task_description:
+            return f'Instruct: {task_description}\nQuery:{query}'
+        else:
+            return query
 
     def compute_embeddings(self, texts, task_querys=None, normalize=True):
         if task_querys:
@@ -46,30 +40,15 @@ class QwenPenaltyHandler(BaseHandler):
 
         return results
 
-    @staticmethod
-    def format_question(question, choices=None):
-        if not question:  # 虽然不valid，但是还是参与计算，防止输入输出长度不一致
-            return ''
-        if choices is None:  # 没有选择题，则直接返回问题
-            return question
-        options = []
-        for idx, option in choices.items():
-            options.append(f"{idx}: {option}")
-        options = sorted(options, key=lambda x: x.split(":")[0])
-        choices_str = ", ".join(options)
-        return f"Question: {question}\n Choices: [{choices_str}]"
-
     def process_batch(self, batch):
         task_queries = []
         texts = []
         for item in batch:
-            question = item["question"]
-            choices = item["choices"]
-            question_type = item["question_type"]
-            text = self.format_question(question, choices)
-            texts.append(text)
-            task_query = self.TASK_QUERY[question_type]
-            task_queries.append(task_query)
+            prompt = item["prompt"]
+            instruction = item["instruction"]
+            texts.append(prompt)
+            task_queries.append(instruction)
+
         texts_list = self.chunk_list(texts, self.batch_size)
         task_queries_list = self.chunk_list(task_queries, self.batch_size)
 
@@ -100,7 +79,7 @@ class QwenPenaltyHandler(BaseHandler):
         return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
     def health(self):
-        batch = [{"question": "test", "choices": None, "question_type": "open_ended"} for _ in range(self.batch_size)]
+        batch = [{"prompt": "test", "instruction": None} for _ in range(self.batch_size)]
 
         try:
             self.process_batch(batch)
