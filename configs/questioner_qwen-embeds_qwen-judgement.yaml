@@ -34,7 +34,7 @@ handlers:
       batch_size: 128
 
   qwen_chatbot:
-    class_name: "handlers.qwen_judgement:QwenChatbotHandler"
+    class_name: "handlers.qwen_chatbot:QwenChatbotHandler"
     num_workers: 3
     gpu_per_worker: 1.0
     placement_strategy: "PACK"
