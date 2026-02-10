@@ -35,24 +35,19 @@ class TaskFormatter:
 
     def single_choice_parse(self, response):
         response = response.split("<answer>")[-1].split("</answer>")[0].strip()
-        if response in self.ALL_CHOICES:
-            return response
-        return ""
+        return response
 
     def multi_choice_parse(self, response):
         response = response.split("<answer>")[-1].split("</answer>")[0]
         choices = response.strip().split(",")
         choices = [_.strip() for _ in choices]
-        for choice in choices:
-            if choice not in self.ALL_CHOICES:
-                return tuple()
-        return tuple(sorted(choices))
+        return sorted(choices)
 
     def closed_ended_parse(self, response):
         response = response.split("<answer>")[-1].split("</answer>")[0].strip().lower()
         if "yes" in response or "是" in response:
             return True
-        if "no" in response or "否" in response:
+        if "no" in response or "否" in response or "不" in response:
             return False
         return False
 

@@ -21,12 +21,6 @@ def build_prompt_and_images(
         image_list = [image_list]
     image_content = []
     for image_path in image_list:
-        # image_content.append({
-        #     "type": "image",
-        #     "image": base64_to_pil(image_path),
-        #     "max_pixels": 1024 ** 2,
-        #     "min_pixels": 512 ** 2,
-        # })
         image_content.append({
             "type": "image",
             "image": Image.open(image_path).convert('RGB'),
