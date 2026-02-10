@@ -75,7 +75,7 @@ class QuestionerHandler(BaseHandler):
             response_list = responses[i]
             raw_response_list = [out.text for out in response_list.outputs]
             item["responses"] = raw_response_list
-
+            results.append(item)
         return results
 
     def health(self):
